@@ -17,7 +17,7 @@
   --text:#f0f0f0; --text2:#aaa; --text3:#606060;
   --accent:#c8f060; --accent-bg:#1e2a10;
   --canvas-bg:#d4d4d4;
-  --TW:76px; --RW:164px;
+  --TW:100px; --RW:164px;
 }
 body{
   background:var(--bg);color:var(--text);
@@ -51,6 +51,20 @@ body{
 #install-btn{display:none;}
 #install-btn.visible{display:flex;align-items:center;gap:5px;}
 
+/* ── UNSAVED INDICATOR ── */
+#unsaved-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--accent);
+  flex-shrink:0;
+  opacity:0;
+  transition:opacity .25s;
+  margin-right:-2px; /* tucks neatly before Save button */
+}
+#unsaved-dot.show{opacity:1;}
+/* subtle pulse when dirty */
+@keyframes pulse-dot{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+#unsaved-dot.show{animation:pulse-dot 2s ease-in-out 3;}
+
 /* ── MAIN ── */
 #main{display:flex;flex:1;overflow:hidden;}
 
@@ -69,7 +83,7 @@ body{
 
 /* icon buttons */
 .ibtn{
-  width:48px;height:40px;border-radius:8px;border:1px solid transparent;
+  width:72px;height:44px;border-radius:8px;border:1px solid transparent;
   background:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   color:var(--text2);transition:background .1s,border-color .1s,color .1s;
@@ -77,11 +91,11 @@ body{
 }
 .ibtn:hover{background:var(--panel2);color:var(--text);border-color:var(--border);}
 .ibtn.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
-.ibtn svg{width:22px;height:22px;pointer-events:none;}
+.ibtn svg{width:26px;height:26px;pointer-events:none;}
 
 /* size buttons */
 .szbtn{
-  width:48px;height:26px;border-radius:5px;border:1px solid transparent;
+  width:72px;height:28px;border-radius:5px;border:1px solid transparent;
   background:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;gap:5px;
   color:var(--text2);font-family:'DM Mono',monospace;font-size:10px;
@@ -93,19 +107,19 @@ body{
 
 /* ── ANGLE SELECTOR ── */
 #angle-section{width:100%;padding:6px 0 8px;border-bottom:1px solid var(--border);}
-#angle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:0 4px;margin-bottom:5px;}
+#angle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:0 6px;margin-bottom:6px;}
 .abtn{
-  aspect-ratio:1;border-radius:5px;border:1px solid transparent;
+  aspect-ratio:1;border-radius:6px;border:1px solid transparent;
   background:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  transition:all .1s;touch-action:manipulation;padding:3px;
+  transition:all .1s;touch-action:manipulation;padding:4px;
 }
 .abtn:hover{background:var(--panel2);border-color:var(--border);}
 .abtn.active{background:var(--accent-bg);border-color:var(--accent);}
-.abtn svg{width:20px;height:20px;pointer-events:none;display:block;}
-#angle-stepper{display:flex;align-items:center;justify-content:center;gap:4px;padding:0 4px;}
+.abtn svg{width:22px;height:22px;pointer-events:none;display:block;}
+#angle-stepper{display:flex;align-items:center;justify-content:center;gap:4px;padding:0 6px;}
 .step-btn{
-  width:24px;height:24px;border:1px solid var(--border);
+  width:26px;height:26px;border:1px solid var(--border);
   background:none;color:var(--text2);cursor:pointer;font-size:14px;
   border-radius:5px;display:flex;align-items:center;justify-content:center;
   transition:all .1s;touch-action:manipulation;flex-shrink:0;
@@ -281,6 +295,7 @@ kbd{background:var(--panel2);border:1px solid var(--border2);border-radius:3px;f
   <button class="tbtn" id="zout">－</button>
   <button class="tbtn" id="zreset">1:1</button>
   <div class="tdiv"></div>
+  <div id="unsaved-dot" title="Unsaved changes"></div>
   <button class="tbtn accent" id="export-btn">↓ Save</button>
   <button class="tbtn" id="install-btn" title="Install as app">⊕ Install</button>
   <div class="tdiv"></div>
@@ -622,6 +637,22 @@ function coords(e){
 }
 
 // ══════════════════════════════════════════════════════
+//  DIRTY STATE
+// ══════════════════════════════════════════════════════
+function setDirty(val){
+  S.dirty=val;
+  const dot=document.getElementById('unsaved-dot');
+  if(val){
+    // re-trigger animation by cloning the node
+    dot.classList.remove('show');
+    void dot.offsetWidth; // reflow
+    dot.classList.add('show');
+  } else {
+    dot.classList.remove('show');
+  }
+}
+
+// ══════════════════════════════════════════════════════
 //  STAMP / ERASE
 // ══════════════════════════════════════════════════════
 function stamp(gx_,gy_){
@@ -632,12 +663,12 @@ function stamp(gx_,gy_){
   if(!canPlace(gx_,gy_,S.size))return;
   pushHistory();
   const shape={id:S.nextId++,type:S.shape,gx:gx_,gy:gy_,size:S.size,angle:S.angle,color:S.color};
-  S.shapes.push(shape);markOccupied(shape,true);S.dirty=true;redraw();
+  S.shapes.push(shape);markOccupied(shape,true);setDirty(true);redraw();
 }
 function eraseAt(gx_,gy_){
   const hit=hitTest(gx_,gy_);if(!hit)return;
   pushHistory();markOccupied(hit,false);S.shapes=S.shapes.filter(s=>s.id!==hit.id);
-  S.dirty=true;redraw();clearGhost();
+  setDirty(true);redraw();clearGhost();
 }
 
 // ══════════════════════════════════════════════════════
@@ -849,7 +880,7 @@ function openPopover(shape,sx_,sy_){
     const iconSVG=makeAngleSVG(type,shape.angle,false,20);
     b.innerHTML=iconSVG;b.appendChild(Object.assign(document.createElement('span'),{textContent:label,style:'font-size:9px;font-family:DM Mono,monospace;color:inherit;margin-left:3px;'}));
     b.onclick=()=>{
-      pushHistory();shape.type=type;S.dirty=true;redraw();
+      pushHistory();shape.type=type;setDirty(true);redraw();
       psh.querySelectorAll('.pop-shape').forEach(x=>x.classList.toggle('active',x.title===label));
       // refresh angle icons in popover to new shape
       rebuildPopAngles(shape);
@@ -864,7 +895,7 @@ function openPopover(shape,sx_,sy_){
     d.className='pop-sw'+(p.hex===shape.color?' active':'');
     d.style.background=p.hex;d.title=p.name;
     d.onclick=()=>{
-      pushHistory();shape.color=p.hex;S.dirty=true;redraw();
+      pushHistory();shape.color=p.hex;setDirty(true);redraw();
       psw.querySelectorAll('.pop-sw').forEach(s=>s.classList.toggle('active',s.title===p.name));
     };
     psw.appendChild(d);
@@ -880,7 +911,7 @@ function openPopover(shape,sx_,sy_){
       if(n===shape.size)return;
       markOccupied(shape,false);
       if(!canPlace(shape.gx,shape.gy,n,0)){markOccupied(shape,true);return;}
-      pushHistory();shape.size=n;markOccupied(shape,true);S.dirty=true;redraw();
+      pushHistory();shape.size=n;markOccupied(shape,true);setDirty(true);redraw();
       psz.querySelectorAll('.pop-sz').forEach(s=>s.classList.toggle('active',s.textContent===n+'×'+n));
     };
     psz.appendChild(b);
@@ -908,7 +939,7 @@ function rebuildPopAngles(shape){
     b.className='pop-ang'+(d.angle===shape.angle?' active':'');b.title=d.title;
     b.innerHTML=makeAngleSVG(shape.type,d.angle,d.angle===shape.angle,16);
     b.onclick=()=>{
-      pushHistory();shape.angle=d.angle;S.dirty=true;redraw();
+      pushHistory();shape.angle=d.angle;setDirty(true);redraw();
       pang.querySelectorAll('.pop-ang').forEach(x=>x.classList.toggle('active',x.title===d.title));
       pang.querySelectorAll('.pop-ang').forEach(x=>{x.innerHTML=makeAngleSVG(shape.type,parseInt(x.title),x.title===d.title,16);});
     };
@@ -922,7 +953,7 @@ document.getElementById('pop-erase').onclick=()=>{
   if(!S.popTarget)return;
   pushHistory();markOccupied(S.popTarget,false);
   S.shapes=S.shapes.filter(s=>s.id!==S.popTarget.id);
-  S.dirty=true;redraw();closePopover();
+  setDirty(true);redraw();closePopover();
 };
 
 // ══════════════════════════════════════════════════════
@@ -930,7 +961,7 @@ document.getElementById('pop-erase').onclick=()=>{
 // ══════════════════════════════════════════════════════
 document.getElementById('clear-btn').onclick=()=>{
   if(!S.shapes.length)return;
-  pushHistory();S.shapes=[];S.occupied=makeGrid();S.dirty=true;redraw();closePopover();
+  pushHistory();S.shapes=[];S.occupied=makeGrid();setDirty(true);redraw();closePopover();
 };
 undoBtn.onclick=undo;
 
@@ -970,7 +1001,7 @@ function triggerDownload(url,filename){
   const a=document.createElement('a');a.href=url;a.download=filename;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),2000);
-  S.dirty=false;
+  setDirty(false);
 }
 document.getElementById('exp-png').onclick=()=>exportAs('png');
 document.getElementById('exp-jpg').onclick=()=>exportAs('jpg');
@@ -1018,7 +1049,7 @@ function dogShapes(){
   return out;
 }
 document.getElementById('load-dog-btn').onclick=()=>{
-  pushHistory();S.shapes=dogShapes();S.nextId=200;rebuildOccupied();S.dirty=false;redraw();
+  pushHistory();S.shapes=dogShapes();S.nextId=200;rebuildOccupied();setDirty(false);redraw();
 };
 
 // ══════════════════════════════════════════════════════
