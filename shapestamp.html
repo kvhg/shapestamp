@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ShapeStamp">
+<link rel="manifest" href="manifest.json">
+<title>ShapeStamp</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#141414; --panel:#1e1e1e; --panel2:#2a2a2a;
+  --border:#333; --border2:#484848;
+  --text:#f0f0f0; --text2:#aaa; --text3:#606060;
+  --accent:#c8f060; --accent-bg:#1e2a10;
+  --canvas-bg:#d4d4d4;
+  --TW:76px; --RW:164px;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  height:100vh;height:100dvh;
+  display:flex;flex-direction:column;
+  overflow:hidden;user-select:none;-webkit-user-select:none;
+  touch-action:none;
+}
+
+/* ── TOPBAR ── */
+#topbar{
+  height:44px;background:var(--panel);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;gap:7px;flex-shrink:0;
+}
+.logo{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--accent);letter-spacing:.06em;margin-right:2px;}
+.tdiv{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.tbtn{
+  background:none;border:1px solid var(--border);color:var(--text2);
+  font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;
+  border-radius:5px;cursor:pointer;transition:all .12s;white-space:nowrap;
+}
+.tbtn:hover{border-color:var(--border2);color:var(--text);}
+.tbtn:active{background:var(--panel2);}
+.tbtn:disabled{opacity:.25;cursor:default;pointer-events:none;}
+.tbtn.accent{border-color:var(--accent);color:var(--accent);}
+.tbtn.accent:hover{background:var(--accent-bg);}
+#zoom-display{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);min-width:36px;text-align:right;}
+
+/* install banner (shown when PWA prompt is available) */
+#install-btn{display:none;}
+#install-btn.visible{display:flex;align-items:center;gap:5px;}
+
+/* ── MAIN ── */
+#main{display:flex;flex:1;overflow:hidden;}
+
+/* ── LEFT TOOLBAR ── */
+#toolbar{
+  width:var(--TW);background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;
+  padding:8px 0;flex-shrink:0;overflow-y:auto;
+}
+.tsec{
+  width:100%;display:flex;flex-direction:column;align-items:center;
+  padding:6px 0 8px;gap:3px;border-bottom:1px solid var(--border);
+}
+.tsec:last-child{border-bottom:none;}
+.tlabel{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;}
+
+/* icon buttons */
+.ibtn{
+  width:48px;height:40px;border-radius:8px;border:1px solid transparent;
+  background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text2);transition:background .1s,border-color .1s,color .1s;
+  touch-action:manipulation;
+}
+.ibtn:hover{background:var(--panel2);color:var(--text);border-color:var(--border);}
+.ibtn.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
+.ibtn svg{width:22px;height:22px;pointer-events:none;}
+
+/* size buttons */
+.szbtn{
+  width:48px;height:26px;border-radius:5px;border:1px solid transparent;
+  background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  color:var(--text2);font-family:'DM Mono',monospace;font-size:10px;
+  transition:all .1s;touch-action:manipulation;
+}
+.szbtn:hover{background:var(--panel2);color:var(--text);border-color:var(--border);}
+.szbtn.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
+.sdot{border-radius:1px;background:currentColor;flex-shrink:0;}
+
+/* ── ANGLE SELECTOR ── */
+#angle-section{width:100%;padding:6px 0 8px;border-bottom:1px solid var(--border);}
+#angle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:0 4px;margin-bottom:5px;}
+.abtn{
+  aspect-ratio:1;border-radius:5px;border:1px solid transparent;
+  background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .1s;touch-action:manipulation;padding:3px;
+}
+.abtn:hover{background:var(--panel2);border-color:var(--border);}
+.abtn.active{background:var(--accent-bg);border-color:var(--accent);}
+.abtn svg{width:20px;height:20px;pointer-events:none;display:block;}
+#angle-stepper{display:flex;align-items:center;justify-content:center;gap:4px;padding:0 4px;}
+.step-btn{
+  width:24px;height:24px;border:1px solid var(--border);
+  background:none;color:var(--text2);cursor:pointer;font-size:14px;
+  border-radius:5px;display:flex;align-items:center;justify-content:center;
+  transition:all .1s;touch-action:manipulation;flex-shrink:0;
+}
+.step-btn:hover{background:var(--panel2);color:var(--text);border-color:var(--border2);}
+#angle-display{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);text-align:center;flex:1;}
+
+/* ── CANVAS ── */
+#canvas-wrap{flex:1;overflow:hidden;position:relative;background:#0d0d0d;}
+#canvas-container{position:absolute;transform-origin:0 0;}
+#canvas-bg{position:absolute;inset:0;background:var(--canvas-bg);}
+#grid-canvas,#shapes-canvas,#ghost-canvas{position:absolute;inset:0;pointer-events:none;}
+#hit-layer{position:absolute;inset:0;touch-action:none;cursor:crosshair;}
+#hit-layer.eraser{cursor:cell;}
+
+/* ── RIGHT PANEL ── */
+#right-panel{
+  width:var(--RW);background:var(--panel);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;padding:10px 10px;gap:10px;
+  flex-shrink:0;overflow-y:auto;
+}
+.plabel{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
+#active-color-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+#active-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;}
+#active-name{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);}
+#swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.sw{
+  aspect-ratio:1;border-radius:8px;cursor:pointer;
+  border:2px solid transparent;transition:transform .1s;position:relative;
+  touch-action:manipulation;
+}
+.sw:hover{transform:scale(1.1);z-index:1;}
+.sw.active::after{content:'';position:absolute;inset:-4px;border-radius:12px;border:2px solid rgba(255,255,255,.8);pointer-events:none;}
+
+/* ── CURRENT STAMP STATUS ── */
+#stamp-status{
+  background:var(--panel2);border:1px solid var(--border2);border-radius:8px;
+  padding:8px 10px;
+}
+.ss-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.ss-row:last-child{margin-bottom:0;}
+#ss-preview{width:32px;height:32px;flex-shrink:0;border-radius:4px;overflow:hidden;background:transparent;}
+#ss-preview svg{width:32px;height:32px;}
+.ss-details{flex:1;min-width:0;}
+.ss-name{font-size:12px;font-weight:500;color:var(--text);line-height:1.3;}
+.ss-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);line-height:1.5;}
+
+/* Info */
+#info{padding-top:8px;border-top:1px solid var(--border);}
+.irow{display:flex;justify-content:space-between;font-size:9.5px;font-family:'DM Mono',monospace;color:var(--text3);padding:2px 0;line-height:1.7;}
+.iv{color:var(--text2);}
+.krow{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+kbd{background:var(--panel2);border:1px solid var(--border2);border-radius:3px;font-family:'DM Mono',monospace;font-size:8px;color:var(--text2);padding:1px 5px;}
+.klbl{font-size:8px;color:var(--text3);align-self:center;}
+
+/* ── POPOVER ── */
+#popover{
+  position:fixed;z-index:1000;
+  background:var(--panel);border:1px solid var(--border2);
+  border-radius:12px;padding:12px;
+  box-shadow:0 8px 40px rgba(0,0,0,.6);
+  min-width:210px;display:none;
+}
+#popover.show{display:block;}
+#pop-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+#pop-title{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
+#pop-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;}
+#pop-close:hover{color:var(--text);}
+
+.pop-section{margin-bottom:10px;}
+.pop-section:last-child{margin-bottom:0;}
+.pop-slabel{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
+.pop-swatches{display:flex;gap:5px;}
+.pop-sw{
+  width:22px;height:22px;border-radius:5px;cursor:pointer;
+  border:2px solid transparent;position:relative;flex-shrink:0;
+  transition:transform .1s;
+}
+.pop-sw:hover{transform:scale(1.1);}
+.pop-sw.active::after{content:'';position:absolute;inset:-3px;border-radius:7px;border:1.5px solid rgba(255,255,255,.75);pointer-events:none;}
+.pop-sz-row{display:flex;gap:4px;}
+.pop-sz{
+  flex:1;padding:5px 2px;border-radius:5px;border:1px solid var(--border);
+  background:none;color:var(--text2);font-family:'DM Mono',monospace;font-size:9px;
+  cursor:pointer;transition:all .1s;text-align:center;
+}
+.pop-sz:hover{border-color:var(--border2);color:var(--text);}
+.pop-sz.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
+
+/* shape toggle in popover */
+.pop-shape-row{display:flex;gap:4px;}
+.pop-shape{
+  flex:1;padding:6px 2px;border-radius:5px;border:1px solid var(--border);
+  background:none;color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .1s;
+}
+.pop-shape:hover{border-color:var(--border2);}
+.pop-shape.active{background:var(--accent-bg);border-color:var(--accent);}
+.pop-shape svg{width:20px;height:20px;}
+
+/* angle grid in popover */
+.pop-angle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;}
+.pop-ang{
+  aspect-ratio:1;border-radius:5px;border:1px solid var(--border);
+  background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .1s;padding:3px;
+}
+.pop-ang:hover{background:var(--panel2);border-color:var(--border2);}
+.pop-ang.active{background:var(--accent-bg);border-color:var(--accent);}
+.pop-ang svg{width:16px;height:16px;display:block;pointer-events:none;}
+
+.pop-divider{height:1px;background:var(--border);margin:8px 0;}
+#pop-erase{
+  width:100%;padding:6px;border-radius:6px;
+  background:none;border:1px solid #6a2020;color:#f08080;
+  font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .1s;
+}
+#pop-erase:hover{background:#3a1515;border-color:#c44;color:#faa;}
+
+/* ── EXPORT / SAVE MODAL ── */
+#export-modal{
+  position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,.65);
+  display:none;align-items:center;justify-content:center;
+}
+#export-modal.show{display:flex;}
+#export-box{
+  background:var(--panel);border:1px solid var(--border2);border-radius:14px;
+  padding:22px 24px;min-width:270px;
+  box-shadow:0 16px 64px rgba(0,0,0,.7);
+}
+#export-box h2{font-size:15px;font-weight:500;margin-bottom:4px;}
+#export-box p{font-size:11px;color:var(--text2);margin-bottom:18px;line-height:1.5;}
+.export-btns{display:flex;gap:8px;margin-bottom:10px;}
+.exp-btn{
+  flex:1;padding:9px;border-radius:7px;border:1px solid var(--border2);
+  background:var(--panel2);color:var(--text);
+  font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .12s;
+}
+.exp-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+#export-cancel{
+  width:100%;padding:7px;border-radius:6px;border:1px solid var(--border);
+  background:none;color:var(--text2);font-family:'DM Mono',monospace;
+  font-size:10px;cursor:pointer;transition:all .12s;
+}
+#export-cancel:hover{color:var(--text);border-color:var(--border2);}
+
+/* ── INSTALL HINT ── */
+#install-hint{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  background:var(--panel);border:1px solid var(--border2);border-radius:10px;
+  padding:10px 16px;font-size:11px;color:var(--text2);
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  display:none;z-index:500;white-space:nowrap;
+}
+#install-hint.show{display:block;}
+#install-hint strong{color:var(--text);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <span class="logo">◈ ShapeStamp</span>
+  <div class="tdiv"></div>
+  <button class="tbtn" id="undo-btn" disabled>↩ Undo</button>
+  <button class="tbtn" id="clear-btn">⊘ Clear</button>
+  <div class="tdiv"></div>
+  <span id="zoom-display">100%</span>
+  <button class="tbtn" id="zin">＋</button>
+  <button class="tbtn" id="zout">－</button>
+  <button class="tbtn" id="zreset">1:1</button>
+  <div class="tdiv"></div>
+  <button class="tbtn accent" id="export-btn">↓ Save</button>
+  <button class="tbtn" id="install-btn" title="Install as app">⊕ Install</button>
+  <div class="tdiv"></div>
+  <button class="tbtn" id="load-dog-btn">🐶</button>
+</div>
+
+<div id="main">
+
+  <!-- LEFT TOOLBAR -->
+  <div id="toolbar">
+    <div class="tsec">
+      <div class="tlabel">Tool</div>
+      <button class="ibtn active" id="tool-stamp" title="Stamp [S]">
+        <svg viewBox="0 0 22 22" fill="none"><rect x="3" y="3" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M11 7v8M7 11h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </button>
+      <button class="ibtn" id="tool-eraser" title="Eraser [E]">
+        <svg viewBox="0 0 22 22" fill="none"><path d="M4 18h14M7 18l-3-3 8-8 5 5-4 6" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="tsec">
+      <div class="tlabel">Shape</div>
+      <button class="ibtn active" id="shape-sq" title="Square [Q]">
+        <svg viewBox="0 0 22 22"><rect x="3" y="3" width="16" height="16" fill="currentColor" rx="1.5"/></svg>
+      </button>
+      <button class="ibtn" id="shape-qc" title="Quarter circle [W]">
+        <svg viewBox="0 0 22 22"><path d="M3 19 A16 16 0 0 1 19 3 L19 19 Z" fill="currentColor"/></svg>
+      </button>
+    </div>
+    <div class="tsec">
+      <div class="tlabel">Size</div>
+      <button class="szbtn active" data-size="1"><span class="sdot" style="width:5px;height:5px"></span>1×1</button>
+      <button class="szbtn" data-size="2"><span class="sdot" style="width:7px;height:7px"></span>2×2</button>
+      <button class="szbtn" data-size="4"><span class="sdot" style="width:10px;height:10px"></span>4×4</button>
+      <button class="szbtn" data-size="6"><span class="sdot" style="width:13px;height:13px"></span>6×6</button>
+    </div>
+    <div id="angle-section">
+      <div style="display:flex;justify-content:center;margin-bottom:4px;"><div class="tlabel">Angle</div></div>
+      <div id="angle-grid"></div>
+      <div id="angle-stepper">
+        <button class="step-btn" id="angle-prev" title="−15° [,]">‹</button>
+        <span id="angle-display">0°</span>
+        <button class="step-btn" id="angle-next" title="+15° [.]">›</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div id="canvas-wrap">
+    <div id="canvas-container">
+      <div id="canvas-bg"></div>
+      <canvas id="grid-canvas"></canvas>
+      <canvas id="shapes-canvas"></canvas>
+      <canvas id="ghost-canvas"></canvas>
+      <div id="hit-layer"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right-panel">
+    <!-- Current stamp -->
+    <div>
+      <div class="plabel">Current stamp</div>
+      <div id="stamp-status">
+        <div class="ss-row">
+          <div id="ss-preview"><svg id="ss-svg" viewBox="0 0 32 32"></svg></div>
+          <div class="ss-details">
+            <div class="ss-name" id="ss-name">Square</div>
+            <div class="ss-sub" id="ss-sub">1×1 · 0° · White</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Color -->
+    <div>
+      <div class="plabel">Color</div>
+      <div id="active-color-row">
+        <div id="active-dot"></div>
+        <span id="active-name">White</span>
+      </div>
+      <div id="swatches"></div>
+    </div>
+    <!-- Info -->
+    <div id="info">
+      <div class="plabel">Info</div>
+      <div class="irow"><span>placed</span><span class="iv" id="i-count">0</span></div>
+      <div class="irow"><span>zoom</span><span class="iv" id="i-zoom">100%</span></div>
+      <div class="krow"><kbd>S</kbd><span class="klbl">stamp</span><kbd>E</kbd><span class="klbl">erase</span><kbd>Q/W</kbd><span class="klbl">shape</span></div>
+      <div class="krow"><kbd>1–4</kbd><span class="klbl">size</span><kbd>,/.</kbd><span class="klbl">rotate</span><kbd>⌘Z</kbd><span class="klbl">undo</span></div>
+      <div class="krow"><kbd>⌘S</kbd><span class="klbl">save</span><kbd>⌘+/-</kbd><span class="klbl">zoom</span></div>
+      <div class="krow" style="margin-top:8px;"><span class="klbl" style="font-size:9px;line-height:1.5;color:var(--text3)">Right-click or long-press a tile to edit it</span></div>
+    </div>
+  </div>
+</div><!-- /main -->
+
+<!-- TILE POPOVER -->
+<div id="popover">
+  <div id="pop-header">
+    <span id="pop-title">Edit tile</span>
+    <button id="pop-close">×</button>
+  </div>
+  <!-- Shape -->
+  <div class="pop-section">
+    <div class="pop-slabel">Shape</div>
+    <div class="pop-shape-row" id="pop-shapes"></div>
+  </div>
+  <!-- Color -->
+  <div class="pop-section">
+    <div class="pop-slabel">Color</div>
+    <div class="pop-swatches" id="pop-swatches"></div>
+  </div>
+  <!-- Size -->
+  <div class="pop-section">
+    <div class="pop-slabel">Size</div>
+    <div class="pop-sz-row" id="pop-sizes"></div>
+  </div>
+  <!-- Angle -->
+  <div class="pop-section">
+    <div class="pop-slabel">Angle</div>
+    <div class="pop-angle-grid" id="pop-angles"></div>
+  </div>
+  <div class="pop-divider"></div>
+  <button id="pop-erase">⊘ Remove tile</button>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="export-modal">
+  <div id="export-box">
+    <h2>Save your work</h2>
+    <p>Choose a format. PNG and JPG export at full canvas resolution.<br>SVG exports clean vector paths.</p>
+    <div class="export-btns">
+      <button class="exp-btn" id="exp-png">PNG</button>
+      <button class="exp-btn" id="exp-jpg">JPG</button>
+      <button class="exp-btn" id="exp-svg">SVG</button>
+    </div>
+    <button id="export-cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- INSTALL HINT -->
+<div id="install-hint">
+  <strong>Tip:</strong> Open this file via a local server to enable <strong>Install as App</strong>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════════════
+const UNIT=24, COLS=32, ROWS=26, CW=UNIT*COLS, CH=UNIT*ROWS, SNAP=15;
+
+const PALETTE=[
+  {hex:'#1a1a1a',name:'Black'},
+  {hex:'#ffffff',name:'White'},
+  {hex:'#f5c400',name:'Gold'},
+  {hex:'#e8302a',name:'Red'},
+  {hex:'#1a8a3a',name:'Green'},
+  {hex:'#1a4fd6',name:'Blue'},
+];
+
+const SIZES=[1,2,4,6];
+
+// 8 directions: angle = degrees of rotation applied to the shape
+// For quarter circle: 0° puts filled corner at bottom-right
+const DIR8=[
+  {angle:0,   title:'0°'},
+  {angle:45,  title:'45°'},
+  {angle:90,  title:'90°'},
+  {angle:135, title:'135°'},
+  {angle:180, title:'180°'},
+  {angle:225, title:'225°'},
+  {angle:270, title:'270°'},
+  {angle:315, title:'315°'},
+];
+
+// ══════════════════════════════════════════════════════
+//  SVG SHAPE GENERATORS  (for toolbar icons + popover)
+// ══════════════════════════════════════════════════════
+// Returns SVG path/rect data for a shape at a given angle, within a viewBox of `vb` units
+function shapeIconSVG(type, angle, color, vb=20) {
+  const cx=vb/2, cy=vb/2, half=vb/2;
+  const rot=`rotate(${angle} ${cx} ${cy})`;
+  if (type==='square') {
+    return `<rect x="${cx-half*0.78}" y="${cy-half*0.78}" width="${vb*0.78}" height="${vb*0.78}"
+      rx="1.5" fill="${color}" transform="${rot}"/>`;
+  } else {
+    const r=vb*0.82;
+    const ox=cx-r/2, oy=cy-r/2;
+    return `<path d="M${ox},${oy} L${ox+r},${oy} A${r},${r} 0 0,1 ${ox},${oy+r} Z"
+      fill="${color}" transform="${rot}"/>`;
+  }
+}
+
+function makeAngleSVG(type, angle, active, size=20) {
+  const color = active ? '#c8f060' : '#888';
+  const inner = shapeIconSVG(type, angle, color, size);
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+const S={
+  tool:'stamp', shape:'square', size:1, angle:0,
+  color:'#ffffff', zoom:1,
+  shapes:[], occupied:makeGrid(),
+  history:[], nextId:1, dirty:false, popTarget:null,
+};
+
+function makeGrid(){
+  return Array.from({length:ROWS},()=>new Array(COLS).fill(0));
+}
+function rebuildOccupied(){
+  S.occupied=makeGrid();
+  for(const s of S.shapes) markOccupied(s,true);
+}
+function markOccupied(shape,val){
+  for(let dy=0;dy<shape.size;dy++) for(let dx=0;dx<shape.size;dx++){
+    const r=shape.gy+dy, c=shape.gx+dx;
+    if(r>=0&&r<ROWS&&c>=0&&c<COLS) S.occupied[r][c]=val?shape.id:0;
+  }
+}
+function canPlace(gx,gy,size,excludeId=0){
+  for(let dy=0;dy<size;dy++) for(let dx=0;dx<size;dx++){
+    const r=gy+dy,c=gx+dx;
+    if(r<0||r>=ROWS||c<0||c>=COLS) return false;
+    const o=S.occupied[r][c];
+    if(o!==0&&o!==excludeId) return false;
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════════════════
+//  DOM
+// ══════════════════════════════════════════════════════
+const wrap=document.getElementById('canvas-wrap');
+const cont=document.getElementById('canvas-container');
+const bgEl=document.getElementById('canvas-bg');
+const gCvs=document.getElementById('grid-canvas');
+const sCvs=document.getElementById('shapes-canvas');
+const hCvs=document.getElementById('ghost-canvas');
+const hitEl=document.getElementById('hit-layer');
+const undoBtn=document.getElementById('undo-btn');
+const zoomDisp=document.getElementById('zoom-display');
+const popover=document.getElementById('popover');
+const exportModal=document.getElementById('export-modal');
+const gx=gCvs.getContext('2d');
+const sx=sCvs.getContext('2d');
+const hx=hCvs.getContext('2d');
+
+[gCvs,sCvs,hCvs].forEach(c=>{c.width=CW;c.height=CH;});
+bgEl.style.cssText=`width:${CW}px;height:${CH}px`;
+hitEl.style.cssText=`position:absolute;inset:0;width:${CW}px;height:${CH}px`;
+
+// ══════════════════════════════════════════════════════
+//  GRID
+// ══════════════════════════════════════════════════════
+function drawGrid(){
+  gx.clearRect(0,0,CW,CH);
+  gx.lineWidth=0.5;
+  gx.strokeStyle='rgba(0,0,0,0.13)';
+  for(let c=0;c<=COLS;c++){gx.beginPath();gx.moveTo(c*UNIT,0);gx.lineTo(c*UNIT,CH);gx.stroke();}
+  for(let r=0;r<=ROWS;r++){gx.beginPath();gx.moveTo(0,r*UNIT);gx.lineTo(CW,r*UNIT);gx.stroke();}
+  gx.strokeStyle='rgba(0,0,0,0.22)';
+  for(let c=0;c<=COLS;c+=4){gx.beginPath();gx.moveTo(c*UNIT,0);gx.lineTo(c*UNIT,CH);gx.stroke();}
+  for(let r=0;r<=ROWS;r+=4){gx.beginPath();gx.moveTo(0,r*UNIT);gx.lineTo(CW,r*UNIT);gx.stroke();}
+}
+
+// ══════════════════════════════════════════════════════
+//  SHAPE DRAW (canvas)
+// ══════════════════════════════════════════════════════
+function drawShape(ctx,type,px,py,sz,angle,color,alpha){
+  ctx.save();
+  ctx.globalAlpha=alpha??1;ctx.fillStyle=color;
+  ctx.translate(px+sz/2,py+sz/2);
+  ctx.rotate(angle*Math.PI/180);
+  ctx.translate(-sz/2,-sz/2);
+  if(type==='square'){
+    ctx.fillRect(0,0,sz,sz);
+  } else {
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(sz,0);
+    ctx.arc(0,0,sz,0,Math.PI/2);ctx.closePath();ctx.fill();
+  }
+  ctx.restore();
+}
+
+function redraw(){
+  sx.clearRect(0,0,CW,CH);
+  for(const s of S.shapes) drawShape(sx,s.type,s.gx*UNIT,s.gy*UNIT,s.size*UNIT,s.angle,s.color);
+  document.getElementById('i-count').textContent=S.shapes.length;
+  undoBtn.disabled=S.history.length===0;
+}
+
+// ══════════════════════════════════════════════════════
+//  GHOST
+// ══════════════════════════════════════════════════════
+let lgx=-1,lgy=-1;
+function drawGhost(gx_,gy_){
+  if(gx_===lgx&&gy_===lgy)return;
+  lgx=gx_;lgy=gy_;
+  hx.clearRect(0,0,CW,CH);
+  if(gx_<0)return;
+  if(S.tool==='eraser'){
+    const h=hitTest(gx_,gy_);
+    if(h){
+      hx.save();hx.strokeStyle='#e8302a';hx.lineWidth=2;
+      hx.setLineDash([4,3]);
+      hx.strokeRect(h.gx*UNIT+1,h.gy*UNIT+1,h.size*UNIT-2,h.size*UNIT-2);
+      hx.restore();
+    }
+    return;
+  }
+  const ok=canPlace(gx_,gy_,S.size);
+  const sz=S.size*UNIT;
+  drawShape(hx,S.shape,gx_*UNIT,gy_*UNIT,sz,S.angle,S.color,ok?0.38:0.12);
+  hx.save();
+  hx.fillStyle=ok?S.color:'#e8302a';hx.globalAlpha=0.9;
+  hx.beginPath();hx.arc(gx_*UNIT+3.5,gy_*UNIT+3.5,2,0,Math.PI*2);hx.fill();
+  if(!ok){
+    hx.strokeStyle='#e8302a';hx.lineWidth=1.5;hx.globalAlpha=0.65;hx.setLineDash([]);
+    hx.beginPath();hx.moveTo(gx_*UNIT+5,gy_*UNIT+5);hx.lineTo(gx_*UNIT+sz-5,gy_*UNIT+sz-5);hx.stroke();
+    hx.beginPath();hx.moveTo(gx_*UNIT+sz-5,gy_*UNIT+5);hx.lineTo(gx_*UNIT+5,gy_*UNIT+sz-5);hx.stroke();
+  }
+  hx.restore();
+}
+function clearGhost(){lgx=-1;lgy=-1;hx.clearRect(0,0,CW,CH);}
+
+// ══════════════════════════════════════════════════════
+//  HIT TEST
+// ══════════════════════════════════════════════════════
+function hitTest(gx_,gy_){
+  if(gy_<0||gy_>=ROWS||gx_<0||gx_>=COLS)return null;
+  const id=S.occupied[gy_][gx_];
+  return id?S.shapes.find(s=>s.id===id)||null:null;
+}
+
+function coords(e){
+  const r=cont.getBoundingClientRect();
+  const x=(e.clientX-r.left)/S.zoom,y=(e.clientY-r.top)/S.zoom;
+  return{gx:Math.max(0,Math.min(COLS-1,Math.floor(x/UNIT))),gy:Math.max(0,Math.min(ROWS-1,Math.floor(y/UNIT)))};
+}
+
+// ══════════════════════════════════════════════════════
+//  STAMP / ERASE
+// ══════════════════════════════════════════════════════
+function stamp(gx_,gy_){
+  const exact=S.shapes.findIndex(s=>s.gx===gx_&&s.gy===gy_&&s.size===S.size&&s.type===S.shape&&s.angle===S.angle);
+  if(exact!==-1){
+    pushHistory();markOccupied(S.shapes[exact],false);S.shapes.splice(exact,1);redraw();return;
+  }
+  if(!canPlace(gx_,gy_,S.size))return;
+  pushHistory();
+  const shape={id:S.nextId++,type:S.shape,gx:gx_,gy:gy_,size:S.size,angle:S.angle,color:S.color};
+  S.shapes.push(shape);markOccupied(shape,true);S.dirty=true;redraw();
+}
+function eraseAt(gx_,gy_){
+  const hit=hitTest(gx_,gy_);if(!hit)return;
+  pushHistory();markOccupied(hit,false);S.shapes=S.shapes.filter(s=>s.id!==hit.id);
+  S.dirty=true;redraw();clearGhost();
+}
+
+// ══════════════════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════════════════
+function pushHistory(){
+  S.history.push(JSON.stringify(S.shapes));
+  if(S.history.length>60)S.history.shift();
+}
+function undo(){
+  if(!S.history.length)return;
+  S.shapes=JSON.parse(S.history.pop());rebuildOccupied();redraw();clearGhost();closePopover();
+}
+
+// ══════════════════════════════════════════════════════
+//  POINTER EVENTS
+// ══════════════════════════════════════════════════════
+hitEl.addEventListener('pointermove',e=>{
+  e.preventDefault();
+  const{gx:g,gy:r}=coords(e);drawGhost(g,r);
+},{passive:false});
+hitEl.addEventListener('pointerleave',clearGhost);
+
+// Track whether a contextmenu just fired to suppress the outside-click close
+let justOpenedPopover=false;
+
+hitEl.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  if(justOpenedPopover){justOpenedPopover=false;return;}
+  if(popover.classList.contains('show')){closePopover();return;}
+  const{gx:g,gy:r}=coords(e);
+  if(S.tool==='stamp')stamp(g,r);
+  else if(S.tool==='eraser')eraseAt(g,r);
+},{passive:false});
+
+// Long-press for touch/stylus
+let longPressTimer=null;
+hitEl.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='touch'||e.pointerType==='pen'){
+    const saved={x:e.clientX,y:e.clientY};
+    longPressTimer=setTimeout(()=>{
+      const{gx:g,gy:r}=coords({clientX:saved.x,clientY:saved.y});
+      const hit=hitTest(g,r);
+      if(hit){justOpenedPopover=true;openPopover(hit,saved.x,saved.y);}
+    },500);
+  }
+},{passive:true});
+hitEl.addEventListener('pointermove',()=>clearTimeout(longPressTimer));
+hitEl.addEventListener('pointerup',()=>clearTimeout(longPressTimer));
+
+// Right-click
+hitEl.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  const{gx:g,gy:r}=coords(e);
+  const hit=hitTest(g,r);
+  if(hit){
+    justOpenedPopover=true;
+    openPopover(hit,e.clientX,e.clientY);
+  }
+});
+
+// Close popover when clicking outside
+document.addEventListener('pointerdown',e=>{
+  if(justOpenedPopover)return;
+  if(popover.classList.contains('show')&&!popover.contains(e.target)&&!hitEl.contains(e.target)){
+    closePopover();
+  }
+},{capture:true});
+
+// ══════════════════════════════════════════════════════
+//  ZOOM  (keyboard ⌘+/- only; no mouse wheel)
+// ══════════════════════════════════════════════════════
+function setZoom(z){
+  S.zoom=Math.max(0.25,Math.min(5,z));
+  cont.style.transform=`scale(${S.zoom})`;
+  const pct=Math.round(S.zoom*100)+'%';
+  zoomDisp.textContent=pct;document.getElementById('i-zoom').textContent=pct;
+  const ww=wrap.clientWidth,wh=wrap.clientHeight;
+  cont.style.left=Math.max(0,(ww-CW*S.zoom)/2)+'px';
+  cont.style.top=Math.max(0,(wh-CH*S.zoom)/2)+'px';
+}
+document.getElementById('zin').onclick=()=>setZoom(S.zoom*1.25);
+document.getElementById('zout').onclick=()=>setZoom(S.zoom*0.8);
+document.getElementById('zreset').onclick=()=>setZoom(1);
+
+// ══════════════════════════════════════════════════════
+//  KEYBOARD
+// ══════════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  const ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key==='z'){e.preventDefault();undo();return;}
+  if(ctrl&&e.key==='s'){e.preventDefault();showExportModal();return;}
+  if(ctrl&&(e.key==='='||e.key==='+')){e.preventDefault();setZoom(S.zoom*1.25);return;}
+  if(ctrl&&e.key==='-'){e.preventDefault();setZoom(S.zoom*0.8);return;}
+  if(e.key==='Escape'){closePopover();return;}
+  if(e.key==='s'||e.key==='S')selectTool('stamp');
+  if(e.key==='e'||e.key==='E')selectTool('eraser');
+  if(e.key==='q'||e.key==='Q')selectShape('square');
+  if(e.key==='w'||e.key==='W')selectShape('quarter');
+  if(e.key==='1')setSize(1);if(e.key==='2')setSize(2);
+  if(e.key==='3')setSize(4);if(e.key==='4')setSize(6);
+  if(e.key===','||e.key==='<')setAngle(S.angle-SNAP);
+  if(e.key==='.'||e.key==='>') setAngle(S.angle+SNAP);
+});
+
+// ══════════════════════════════════════════════════════
+//  STAMP STATUS PANEL
+// ══════════════════════════════════════════════════════
+function updateStampStatus(){
+  const colorName=PALETTE.find(p=>p.hex===S.color)?.name||S.color;
+  document.getElementById('ss-name').textContent=S.shape==='square'?'Square':'Quarter circle';
+  document.getElementById('ss-sub').textContent=`${S.size}×${S.size} · ${S.angle}° · ${colorName}`;
+  const svgEl=document.getElementById('ss-svg');
+  svgEl.innerHTML=shapeIconSVG(S.shape,S.angle,S.color,32);
+}
+
+// ══════════════════════════════════════════════════════
+//  TOOL / SHAPE / SIZE / ANGLE
+// ══════════════════════════════════════════════════════
+function selectTool(t){
+  S.tool=t;
+  document.getElementById('tool-stamp').classList.toggle('active',t==='stamp');
+  document.getElementById('tool-eraser').classList.toggle('active',t==='eraser');
+  hitEl.className=t==='eraser'?'eraser':'';
+  clearGhost();
+}
+document.getElementById('tool-stamp').onclick=()=>selectTool('stamp');
+document.getElementById('tool-eraser').onclick=()=>selectTool('eraser');
+
+function selectShape(s){
+  S.shape=s;
+  document.getElementById('shape-sq').classList.toggle('active',s==='square');
+  document.getElementById('shape-qc').classList.toggle('active',s==='quarter');
+  refreshAngleGrid();updateStampStatus();clearGhost();
+}
+document.getElementById('shape-sq').onclick=()=>selectShape('square');
+document.getElementById('shape-qc').onclick=()=>selectShape('quarter');
+
+function setSize(n){
+  S.size=n;
+  document.querySelectorAll('.szbtn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.size)===n));
+  updateStampStatus();clearGhost();
+}
+document.querySelectorAll('.szbtn').forEach(b=>b.onclick=()=>setSize(parseInt(b.dataset.size)));
+
+function setAngle(deg){
+  S.angle=((Math.round(deg/SNAP)*SNAP)%360+360)%360;
+  document.getElementById('angle-display').textContent=S.angle+'°';
+  refreshAngleGrid();updateStampStatus();clearGhost();
+}
+document.getElementById('angle-prev').onclick=()=>setAngle(S.angle-SNAP);
+document.getElementById('angle-next').onclick=()=>setAngle(S.angle+SNAP);
+
+function refreshAngleGrid(){
+  const grid=document.getElementById('angle-grid');
+  grid.querySelectorAll('.abtn').forEach(btn=>{
+    const a=parseInt(btn.dataset.angle);
+    btn.classList.toggle('active',a===S.angle);
+    btn.innerHTML=makeAngleSVG(S.shape,a,a===S.angle,20);
+  });
+}
+
+// Build angle grid (once, then refresh on shape/angle change)
+(function buildAngleGrid(){
+  const grid=document.getElementById('angle-grid');
+  DIR8.forEach(d=>{
+    const btn=document.createElement('button');
+    btn.className='abtn'+(d.angle===0?' active':'');
+    btn.dataset.angle=d.angle;btn.title=d.title;
+    btn.innerHTML=makeAngleSVG(S.shape,d.angle,d.angle===0,20);
+    btn.onclick=()=>setAngle(d.angle);
+    grid.appendChild(btn);
+  });
+})();
+
+// ══════════════════════════════════════════════════════
+//  COLOR
+// ══════════════════════════════════════════════════════
+function setColor(hex){
+  S.color=hex;
+  const entry=PALETTE.find(p=>p.hex===hex)||{name:hex};
+  document.getElementById('active-dot').style.background=hex;
+  document.getElementById('active-name').textContent=entry.name;
+  document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',s.dataset.color===hex));
+  updateStampStatus();clearGhost();
+}
+(function buildSwatches(){
+  const grid=document.getElementById('swatches');
+  PALETTE.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='sw';d.style.background=p.hex;d.dataset.color=p.hex;d.title=p.name;
+    d.onclick=()=>setColor(p.hex);grid.appendChild(d);
+  });
+})();
+
+// ══════════════════════════════════════════════════════
+//  TILE POPOVER
+// ══════════════════════════════════════════════════════
+function openPopover(shape,sx_,sy_){
+  S.popTarget=shape;
+  document.getElementById('pop-title').textContent=`Edit tile`;
+
+  // Shape
+  const psh=document.getElementById('pop-shapes');psh.innerHTML='';
+  [{type:'square',label:'Square'},{type:'quarter',label:'Quarter'}].forEach(({type,label})=>{
+    const b=document.createElement('button');
+    b.className='pop-shape'+(shape.type===type?' active':'');b.title=label;
+    const iconSVG=makeAngleSVG(type,shape.angle,false,20);
+    b.innerHTML=iconSVG;b.appendChild(Object.assign(document.createElement('span'),{textContent:label,style:'font-size:9px;font-family:DM Mono,monospace;color:inherit;margin-left:3px;'}));
+    b.onclick=()=>{
+      pushHistory();shape.type=type;S.dirty=true;redraw();
+      psh.querySelectorAll('.pop-shape').forEach(x=>x.classList.toggle('active',x.title===label));
+      // refresh angle icons in popover to new shape
+      rebuildPopAngles(shape);
+    };
+    psh.appendChild(b);
+  });
+
+  // Color
+  const psw=document.getElementById('pop-swatches');psw.innerHTML='';
+  PALETTE.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='pop-sw'+(p.hex===shape.color?' active':'');
+    d.style.background=p.hex;d.title=p.name;
+    d.onclick=()=>{
+      pushHistory();shape.color=p.hex;S.dirty=true;redraw();
+      psw.querySelectorAll('.pop-sw').forEach(s=>s.classList.toggle('active',s.title===p.name));
+    };
+    psw.appendChild(d);
+  });
+
+  // Size
+  const psz=document.getElementById('pop-sizes');psz.innerHTML='';
+  SIZES.forEach(n=>{
+    const b=document.createElement('button');
+    b.className='pop-sz'+(n===shape.size?' active':'');
+    b.textContent=n+'×'+n;
+    b.onclick=()=>{
+      if(n===shape.size)return;
+      markOccupied(shape,false);
+      if(!canPlace(shape.gx,shape.gy,n,0)){markOccupied(shape,true);return;}
+      pushHistory();shape.size=n;markOccupied(shape,true);S.dirty=true;redraw();
+      psz.querySelectorAll('.pop-sz').forEach(s=>s.classList.toggle('active',s.textContent===n+'×'+n));
+    };
+    psz.appendChild(b);
+  });
+
+  // Angles
+  rebuildPopAngles(shape);
+
+  // Position
+  popover.style.left='0px';popover.style.top='0px';
+  popover.classList.add('show');
+  const pw=popover.offsetWidth,ph=popover.offsetHeight;
+  const vw=window.innerWidth,vh=window.innerHeight;
+  let left=sx_+10,top=sy_+10;
+  if(left+pw>vw-8)left=sx_-pw-10;
+  if(top+ph>vh-8)top=sy_-ph-10;
+  popover.style.left=Math.max(4,left)+'px';
+  popover.style.top=Math.max(4,top)+'px';
+}
+
+function rebuildPopAngles(shape){
+  const pang=document.getElementById('pop-angles');pang.innerHTML='';
+  DIR8.forEach(d=>{
+    const b=document.createElement('button');
+    b.className='pop-ang'+(d.angle===shape.angle?' active':'');b.title=d.title;
+    b.innerHTML=makeAngleSVG(shape.type,d.angle,d.angle===shape.angle,16);
+    b.onclick=()=>{
+      pushHistory();shape.angle=d.angle;S.dirty=true;redraw();
+      pang.querySelectorAll('.pop-ang').forEach(x=>x.classList.toggle('active',x.title===d.title));
+      pang.querySelectorAll('.pop-ang').forEach(x=>{x.innerHTML=makeAngleSVG(shape.type,parseInt(x.title),x.title===d.title,16);});
+    };
+    pang.appendChild(b);
+  });
+}
+
+function closePopover(){popover.classList.remove('show');S.popTarget=null;}
+document.getElementById('pop-close').onclick=closePopover;
+document.getElementById('pop-erase').onclick=()=>{
+  if(!S.popTarget)return;
+  pushHistory();markOccupied(S.popTarget,false);
+  S.shapes=S.shapes.filter(s=>s.id!==S.popTarget.id);
+  S.dirty=true;redraw();closePopover();
+};
+
+// ══════════════════════════════════════════════════════
+//  CLEAR / UNDO
+// ══════════════════════════════════════════════════════
+document.getElementById('clear-btn').onclick=()=>{
+  if(!S.shapes.length)return;
+  pushHistory();S.shapes=[];S.occupied=makeGrid();S.dirty=true;redraw();closePopover();
+};
+undoBtn.onclick=undo;
+
+// ══════════════════════════════════════════════════════
+//  EXPORT / SAVE
+// ══════════════════════════════════════════════════════
+function showExportModal(){exportModal.classList.add('show');}
+function hideExportModal(){exportModal.classList.remove('show');}
+document.getElementById('export-btn').onclick=showExportModal;
+document.getElementById('export-cancel').onclick=hideExportModal;
+
+function exportAs(fmt){
+  hideExportModal();
+  const oc=document.createElement('canvas');oc.width=CW;oc.height=CH;
+  const oc2=oc.getContext('2d');
+  oc2.fillStyle='#d4d4d4';oc2.fillRect(0,0,CW,CH);
+  for(const s of S.shapes) drawShape(oc2,s.type,s.gx*UNIT,s.gy*UNIT,s.size*UNIT,s.angle,s.color);
+  if(fmt==='svg'){
+    let paths='';
+    for(const s of S.shapes){
+      const px=s.gx*UNIT,py=s.gy*UNIT,sz=s.size*UNIT;
+      const tf=`translate(${px+sz/2},${py+sz/2}) rotate(${s.angle}) translate(${-sz/2},${-sz/2})`;
+      if(s.type==='square'){
+        paths+=`  <rect x="0" y="0" width="${sz}" height="${sz}" fill="${s.color}" transform="${tf}"/>\n`;
+      } else {
+        paths+=`  <path d="M0,0 L${sz},0 A${sz},${sz} 0 0,1 0,${sz} Z" fill="${s.color}" transform="${tf}"/>\n`;
+      }
+    }
+    const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}">\n  <rect width="${CW}" height="${CH}" fill="#d4d4d4"/>\n${paths}</svg>`;
+    triggerDownload(URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'})),'shapestamp.svg');
+    return;
+  }
+  const mime=fmt==='jpg'?'image/jpeg':'image/png';
+  oc.toBlob(blob=>triggerDownload(URL.createObjectURL(blob),`shapestamp.${fmt}`),mime,0.93);
+}
+function triggerDownload(url,filename){
+  const a=document.createElement('a');a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  S.dirty=false;
+}
+document.getElementById('exp-png').onclick=()=>exportAs('png');
+document.getElementById('exp-jpg').onclick=()=>exportAs('jpg');
+document.getElementById('exp-svg').onclick=()=>exportAs('svg');
+
+// ══════════════════════════════════════════════════════
+//  PWA INSTALL
+// ══════════════════════════════════════════════════════
+let deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredInstall=e;
+  const btn=document.getElementById('install-btn');
+  btn.classList.add('visible');
+});
+document.getElementById('install-btn').onclick=async()=>{
+  if(!deferredInstall){
+    // Show hint about needing HTTPS/local server
+    const hint=document.getElementById('install-hint');
+    hint.classList.add('show');setTimeout(()=>hint.classList.remove('show'),4000);
+    return;
+  }
+  deferredInstall.prompt();
+  const{outcome}=await deferredInstall.userChoice;
+  if(outcome==='accepted') document.getElementById('install-btn').style.display='none';
+  deferredInstall=null;
+};
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('install-btn').style.display='none';
+});
+
+// ══════════════════════════════════════════════════════
+//  DOG DEMO
+// ══════════════════════════════════════════════════════
+function dogShapes(){
+  const B='#1a1a1a',R='#e8302a';let id=1;const out=[];
+  const sq=(gx,gy,size,color)=>out.push({id:id++,type:'square',gx,gy,size,angle:0,color});
+  const qc=(gx,gy,size,angle,color)=>out.push({id:id++,type:'quarter',gx,gy,size,angle,color});
+  sq(6,2,2,B);sq(6,4,2,B);sq(6,6,2,B);qc(8,2,2,90,B);
+  sq(22,2,2,B);sq(22,4,2,B);sq(22,6,2,B);qc(20,2,2,0,B);
+  qc(10,2,2,0,B);qc(18,2,2,90,B);
+  qc(13,5,2,180,B);qc(15,5,2,270,B);qc(13,7,2,90,B);qc(15,7,2,0,B);
+  sq(13,13,2,R);sq(15,13,2,R);
+  sq(13,15,2,R);sq(15,15,2,R);
+  qc(13,15,2,90,R);qc(15,15,2,0,R);
+  return out;
+}
+document.getElementById('load-dog-btn').onclick=()=>{
+  pushHistory();S.shapes=dogShapes();S.nextId=200;rebuildOccupied();S.dirty=false;redraw();
+};
+
+// ══════════════════════════════════════════════════════
+//  SERVICE WORKER
+// ══════════════════════════════════════════════════════
+if('serviceWorker'in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+drawGrid();
+setColor('#ffffff');
+setAngle(0);
+setZoom(1);
+updateStampStatus();
+redraw();
+window.addEventListener('resize',()=>setZoom(S.zoom));
+</script>
+</body>
+</html>
