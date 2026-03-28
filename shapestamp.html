@@ -725,38 +725,82 @@ function undo(){
 // ══════════════════════════════════════════════════════
 hitEl.addEventListener('pointermove',e=>{
   e.preventDefault();
-  const{gx:g,gy:r}=coords(e);drawGhost(g,r);
+  const{gx:g,gy:r}=coords(e);
+  drawGhost(g,r);
+  // cancel long-press only if pencil/touch moved more than 8px
+  if(longPressTimer!==null){
+    const dx=e.clientX-longPressOrigin.x, dy=e.clientY-longPressOrigin.y;
+    if(Math.sqrt(dx*dx+dy*dy)>8) cancelLongPress();
+  }
 },{passive:false});
-hitEl.addEventListener('pointerleave',clearGhost);
 
-// Track whether a contextmenu just fired to suppress the outside-click close
+hitEl.addEventListener('pointerleave',()=>{clearGhost();cancelLongPress();});
+hitEl.addEventListener('pointerup',()=>cancelLongPress());
+hitEl.addEventListener('pointercancel',()=>cancelLongPress());
+
 let justOpenedPopover=false;
+let longPressTimer=null;
+let longPressOrigin={x:0,y:0};
+let longPressFired=false;  // prevents stamp from firing after long-press opens popover
 
+function cancelLongPress(){
+  clearTimeout(longPressTimer);
+  longPressTimer=null;
+}
+
+// Single unified pointerdown handler
 hitEl.addEventListener('pointerdown',e=>{
   e.preventDefault();
+  longPressFired=false;
+
+  // right-click is handled entirely by contextmenu — don't interfere
+  if(e.button===2) return;
+
+  // if popover just opened via contextmenu, swallow this event
   if(justOpenedPopover){justOpenedPopover=false;return;}
+
+  // close popover on tap elsewhere
   if(popover.classList.contains('show')){closePopover();return;}
+
   const{gx:g,gy:r}=coords(e);
-  if(S.tool==='stamp')stamp(g,r);
-  else if(S.tool==='eraser')eraseAt(g,r);
+
+  // long-press for pen and touch — 650ms, movement-tolerant
+  if(e.pointerType==='pen'||e.pointerType==='touch'){
+    longPressOrigin={x:e.clientX,y:e.clientY};
+    longPressTimer=setTimeout(()=>{
+      longPressTimer=null;
+      const hit=hitTest(g,r);
+      if(hit){
+        longPressFired=true;
+        justOpenedPopover=true;
+        openPopover(hit,longPressOrigin.x,longPressOrigin.y);
+      }
+    },650);
+    // for pen/touch we wait for pointerup to decide stamp vs long-press
+    return;
+  }
+
+  // mouse: stamp/erase immediately
+  if(S.tool==='stamp') stamp(g,r);
+  else if(S.tool==='eraser') eraseAt(g,r);
 },{passive:false});
 
-// Long-press for touch/stylus
-let longPressTimer=null;
-hitEl.addEventListener('pointerdown',e=>{
-  if(e.pointerType==='touch'||e.pointerType==='pen'){
-    const saved={x:e.clientX,y:e.clientY};
-    longPressTimer=setTimeout(()=>{
-      const{gx:g,gy:r}=coords({clientX:saved.x,clientY:saved.y});
-      const hit=hitTest(g,r);
-      if(hit){justOpenedPopover=true;openPopover(hit,saved.x,saved.y);}
-    },500);
+// For pen/touch: act on pointerup if long-press didn't fire
+hitEl.addEventListener('pointerup',e=>{
+  if(e.pointerType!=='pen'&&e.pointerType!=='touch') return;
+  if(longPressTimer!==null){
+    // released before long-press threshold — treat as normal tap
+    cancelLongPress();
+    if(!longPressFired&&!popover.classList.contains('show')){
+      const{gx:g,gy:r}=coords(e);
+      if(S.tool==='stamp') stamp(g,r);
+      else if(S.tool==='eraser') eraseAt(g,r);
+    }
   }
-},{passive:true});
-hitEl.addEventListener('pointermove',()=>clearTimeout(longPressTimer));
-hitEl.addEventListener('pointerup',()=>clearTimeout(longPressTimer));
+  longPressFired=false;
+});
 
-// Right-click
+// Right-click (mouse)
 hitEl.addEventListener('contextmenu',e=>{
   e.preventDefault();
   const{gx:g,gy:r}=coords(e);
@@ -764,6 +808,8 @@ hitEl.addEventListener('contextmenu',e=>{
   if(hit){
     justOpenedPopover=true;
     openPopover(hit,e.clientX,e.clientY);
+  } else {
+    justOpenedPopover=false; // no tile here — reset flag so next pointerdown isn't swallowed
   }
 });
 
