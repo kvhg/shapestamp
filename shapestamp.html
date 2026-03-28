@@ -16,8 +16,10 @@
   --border:#333; --border2:#484848;
   --text:#f0f0f0; --text2:#aaa; --text3:#606060;
   --accent:#c8f060; --accent-bg:#1e2a10;
+  --warn:#f5a623; --warn-bg:#2a1f0a;
   --canvas-bg:#d4d4d4;
-  --TW:100px; --RW:164px;
+  --TW: clamp(100px, 11vw, 140px);
+  --RW: clamp(168px, 16vw, 240px);
 }
 body{
   background:var(--bg);color:var(--text);
@@ -54,15 +56,14 @@ body{
 /* ── UNSAVED INDICATOR ── */
 #unsaved-dot{
   width:7px;height:7px;border-radius:50%;
-  background:var(--accent);
+  background:var(--warn);
   flex-shrink:0;
   opacity:0;
   transition:opacity .25s;
-  margin-right:-2px; /* tucks neatly before Save button */
+  margin-right:-2px;
 }
 #unsaved-dot.show{opacity:1;}
-/* subtle pulse when dirty */
-@keyframes pulse-dot{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+@keyframes pulse-dot{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
 #unsaved-dot.show{animation:pulse-dot 2s ease-in-out 3;}
 
 /* ── MAIN ── */
@@ -142,9 +143,6 @@ body{
   flex-shrink:0;overflow-y:auto;
 }
 .plabel{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
-#active-color-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-#active-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;}
-#active-name{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);}
 #swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
 .sw{
   aspect-ratio:1;border-radius:8px;cursor:pointer;
@@ -167,13 +165,28 @@ body{
 .ss-name{font-size:12px;font-weight:500;color:var(--text);line-height:1.3;}
 .ss-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);line-height:1.5;}
 
-/* Info */
+/* Info + Shortcuts */
 #info{padding-top:8px;border-top:1px solid var(--border);}
-.irow{display:flex;justify-content:space-between;font-size:9.5px;font-family:'DM Mono',monospace;color:var(--text3);padding:2px 0;line-height:1.7;}
+.irow{display:flex;justify-content:space-between;font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);padding:2px 0;line-height:1.7;}
 .iv{color:var(--text2);}
-.krow{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
-kbd{background:var(--panel2);border:1px solid var(--border2);border-radius:3px;font-family:'DM Mono',monospace;font-size:8px;color:var(--text2);padding:1px 5px;}
-.klbl{font-size:8px;color:var(--text3);align-self:center;}
+/* shortcut rows — card style matching stamp status */
+#shortcuts{
+  background:var(--panel2);border:1px solid var(--border2);border-radius:8px;
+  padding:8px 10px;margin-top:8px;display:flex;flex-direction:column;gap:4px;
+}
+.sc-row{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:10px;font-family:'DM Mono',monospace;
+}
+.sc-label{color:var(--text2);}
+.sc-key{
+  background:var(--bg);border:1px solid var(--border2);border-radius:3px;
+  color:var(--text2);font-size:9px;padding:1px 6px;white-space:nowrap;
+}
+.sc-tip{
+  font-size:9px;color:var(--text3);line-height:1.5;margin-top:2px;
+  padding-top:4px;border-top:1px solid var(--border);
+}
 
 /* ── POPOVER ── */
 #popover{
@@ -241,33 +254,49 @@ kbd{background:var(--panel2);border:1px solid var(--border2);border-radius:3px;f
 }
 #pop-erase:hover{background:#3a1515;border-color:#c44;color:#faa;}
 
-/* ── EXPORT / SAVE MODAL ── */
+/* ── SAVE MODAL ── */
 #export-modal{
   position:fixed;inset:0;z-index:2000;
-  background:rgba(0,0,0,.65);
+  background:rgba(0,0,0,.6);
   display:none;align-items:center;justify-content:center;
 }
 #export-modal.show{display:flex;}
 #export-box{
   background:var(--panel);border:1px solid var(--border2);border-radius:14px;
-  padding:22px 24px;min-width:270px;
+  padding:22px 24px;width:320px;
   box-shadow:0 16px 64px rgba(0,0,0,.7);
 }
-#export-box h2{font-size:15px;font-weight:500;margin-bottom:4px;}
+#export-box h2{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px;}
 #export-box p{font-size:11px;color:var(--text2);margin-bottom:18px;line-height:1.5;}
-.export-btns{display:flex;gap:8px;margin-bottom:10px;}
-.exp-btn{
-  flex:1;padding:9px;border-radius:7px;border:1px solid var(--border2);
-  background:var(--panel2);color:var(--text);
-  font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .12s;
+/* filename + extension row */
+#save-field-row{display:flex;align-items:center;margin-bottom:16px;}
+#save-filename{
+  flex:1;background:#141414;border:1px solid var(--border2);border-right:none;
+  color:var(--text);font-family:'DM Mono',monospace;font-size:12px;
+  padding:8px 10px;border-radius:6px 0 0 6px;outline:none;
+  transition:border-color .12s;
 }
-.exp-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
-#export-cancel{
-  width:100%;padding:7px;border-radius:6px;border:1px solid var(--border);
-  background:none;color:var(--text2);font-family:'DM Mono',monospace;
-  font-size:10px;cursor:pointer;transition:all .12s;
+#save-filename:focus{border-color:var(--accent);}
+#save-ext{
+  background:var(--panel2);border:1px solid var(--border2);border-left:none;
+  color:var(--text2);font-family:'DM Mono',monospace;font-size:11px;
+  padding:8px 10px;border-radius:0 6px 6px 0;cursor:pointer;outline:none;
+  transition:border-color .12s;
 }
-#export-cancel:hover{color:var(--text);border-color:var(--border2);}
+#save-ext:focus{border-color:var(--accent);}
+#save-btn-row{display:flex;gap:8px;justify-content:flex-end;}
+#save-cancel{
+  background:none;border:1px solid var(--border);color:var(--text2);
+  font-family:'DM Mono',monospace;font-size:11px;padding:7px 14px;
+  border-radius:6px;cursor:pointer;transition:all .12s;
+}
+#save-cancel:hover{border-color:var(--border2);color:var(--text);}
+#save-confirm{
+  background:var(--accent);border:none;color:#141414;
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+  padding:7px 18px;border-radius:6px;cursor:pointer;transition:all .12s;
+}
+#save-confirm:hover{background:#d8ff70;}
 
 /* ── INSTALL HINT ── */
 #install-hint{
@@ -287,6 +316,9 @@ kbd{background:var(--panel2);border:1px solid var(--border2);border-radius:3px;f
 <div id="topbar">
   <span class="logo">◈ ShapeStamp</span>
   <div class="tdiv"></div>
+  <div id="unsaved-dot" title="Unsaved changes"></div>
+  <button class="tbtn accent" id="export-btn">↓ Save</button>
+  <div class="tdiv"></div>
   <button class="tbtn" id="undo-btn" disabled>↩ Undo</button>
   <button class="tbtn" id="clear-btn">⊘ Clear</button>
   <div class="tdiv"></div>
@@ -295,11 +327,7 @@ kbd{background:var(--panel2);border:1px solid var(--border2);border-radius:3px;f
   <button class="tbtn" id="zout">－</button>
   <button class="tbtn" id="zreset">1:1</button>
   <div class="tdiv"></div>
-  <div id="unsaved-dot" title="Unsaved changes"></div>
-  <button class="tbtn accent" id="export-btn">↓ Save</button>
   <button class="tbtn" id="install-btn" title="Install as app">⊕ Install</button>
-  <div class="tdiv"></div>
-  <button class="tbtn" id="load-dog-btn">🐶</button>
 </div>
 
 <div id="main">
@@ -371,21 +399,24 @@ kbd{background:var(--panel2);border:1px solid var(--border2);border-radius:3px;f
     <!-- Color -->
     <div>
       <div class="plabel">Color</div>
-      <div id="active-color-row">
-        <div id="active-dot"></div>
-        <span id="active-name">White</span>
-      </div>
       <div id="swatches"></div>
     </div>
-    <!-- Info -->
+    <!-- Info + Shortcuts -->
     <div id="info">
       <div class="plabel">Info</div>
       <div class="irow"><span>placed</span><span class="iv" id="i-count">0</span></div>
       <div class="irow"><span>zoom</span><span class="iv" id="i-zoom">100%</span></div>
-      <div class="krow"><kbd>S</kbd><span class="klbl">stamp</span><kbd>E</kbd><span class="klbl">erase</span><kbd>Q/W</kbd><span class="klbl">shape</span></div>
-      <div class="krow"><kbd>1–4</kbd><span class="klbl">size</span><kbd>,/.</kbd><span class="klbl">rotate</span><kbd>⌘Z</kbd><span class="klbl">undo</span></div>
-      <div class="krow"><kbd>⌘S</kbd><span class="klbl">save</span><kbd>⌘+/-</kbd><span class="klbl">zoom</span></div>
-      <div class="krow" style="margin-top:8px;"><span class="klbl" style="font-size:9px;line-height:1.5;color:var(--text3)">Right-click or long-press a tile to edit it</span></div>
+      <div id="shortcuts">
+        <div class="sc-row"><span class="sc-label">Stamp</span><span class="sc-key">S</span></div>
+        <div class="sc-row"><span class="sc-label">Erase</span><span class="sc-key">E</span></div>
+        <div class="sc-row"><span class="sc-label">Shape</span><span class="sc-key">Q / W</span></div>
+        <div class="sc-row"><span class="sc-label">Size</span><span class="sc-key">1 – 4</span></div>
+        <div class="sc-row"><span class="sc-label">Rotate</span><span class="sc-key">, / .</span></div>
+        <div class="sc-row"><span class="sc-label">Undo</span><span class="sc-key">⌘Z</span></div>
+        <div class="sc-row"><span class="sc-label">Save</span><span class="sc-key">⌘S</span></div>
+        <div class="sc-row"><span class="sc-label">Zoom</span><span class="sc-key">⌘ + / −</span></div>
+        <div class="sc-tip">Right-click or long-press any tile to edit its shape, size, angle, or color.</div>
+      </div>
     </div>
   </div>
 </div><!-- /main -->
@@ -420,17 +451,23 @@ kbd{background:var(--panel2);border:1px solid var(--border2);border-radius:3px;f
   <button id="pop-erase">⊘ Remove tile</button>
 </div>
 
-<!-- EXPORT MODAL -->
+<!-- SAVE MODAL -->
 <div id="export-modal">
   <div id="export-box">
-    <h2>Save your work</h2>
-    <p>Choose a format. PNG and JPG export at full canvas resolution.<br>SVG exports clean vector paths.</p>
-    <div class="export-btns">
-      <button class="exp-btn" id="exp-png">PNG</button>
-      <button class="exp-btn" id="exp-jpg">JPG</button>
-      <button class="exp-btn" id="exp-svg">SVG</button>
+    <h2>Save drawing</h2>
+    <p>The file will download to your Downloads folder.</p>
+    <div id="save-field-row">
+      <input id="save-filename" type="text" value="my-drawing" spellcheck="false" autocomplete="off">
+      <select id="save-ext">
+        <option value="png">.png</option>
+        <option value="jpg">.jpg</option>
+        <option value="svg">.svg</option>
+      </select>
     </div>
-    <button id="export-cancel">Cancel</button>
+    <div id="save-btn-row">
+      <button id="save-cancel">Cancel</button>
+      <button id="save-confirm">Save</button>
+    </div>
   </div>
 </div>
 
@@ -850,9 +887,6 @@ function refreshAngleGrid(){
 // ══════════════════════════════════════════════════════
 function setColor(hex){
   S.color=hex;
-  const entry=PALETTE.find(p=>p.hex===hex)||{name:hex};
-  document.getElementById('active-dot').style.background=hex;
-  document.getElementById('active-name').textContent=entry.name;
   document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('active',s.dataset.color===hex));
   updateStampStatus();clearGhost();
 }
@@ -966,15 +1000,43 @@ document.getElementById('clear-btn').onclick=()=>{
 undoBtn.onclick=undo;
 
 // ══════════════════════════════════════════════════════
-//  EXPORT / SAVE
+//  SAVE MODAL
 // ══════════════════════════════════════════════════════
-function showExportModal(){exportModal.classList.add('show');}
+function showExportModal(){
+  // pre-fill a timestamped default name
+  const now=new Date();
+  const stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('save-filename').value=`drawing-${stamp}`;
+  exportModal.classList.add('show');
+  setTimeout(()=>{
+    const f=document.getElementById('save-filename');
+    f.focus();f.select();
+  },50);
+}
 function hideExportModal(){exportModal.classList.remove('show');}
 document.getElementById('export-btn').onclick=showExportModal;
-document.getElementById('export-cancel').onclick=hideExportModal;
+document.getElementById('save-cancel').onclick=hideExportModal;
 
-function exportAs(fmt){
+// Close on backdrop click
+exportModal.addEventListener('pointerdown',e=>{
+  if(e.target===exportModal)hideExportModal();
+});
+
+// ⌘Enter confirms from within the dialog
+document.getElementById('export-box').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();doSave();}
+  if(e.key==='Escape'){e.preventDefault();hideExportModal();}
+});
+
+function doSave(){
+  const name=(document.getElementById('save-filename').value.trim()||'drawing').replace(/[/\\?%*:|"<>]/g,'-');
+  const fmt=document.getElementById('save-ext').value;
   hideExportModal();
+  exportAs(fmt,name);
+}
+document.getElementById('save-confirm').onclick=doSave;
+
+function exportAs(fmt,name){
   const oc=document.createElement('canvas');oc.width=CW;oc.height=CH;
   const oc2=oc.getContext('2d');
   oc2.fillStyle='#d4d4d4';oc2.fillRect(0,0,CW,CH);
@@ -991,11 +1053,11 @@ function exportAs(fmt){
       }
     }
     const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}">\n  <rect width="${CW}" height="${CH}" fill="#d4d4d4"/>\n${paths}</svg>`;
-    triggerDownload(URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'})),'shapestamp.svg');
+    triggerDownload(URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'})),`${name}.svg`);
     return;
   }
   const mime=fmt==='jpg'?'image/jpeg':'image/png';
-  oc.toBlob(blob=>triggerDownload(URL.createObjectURL(blob),`shapestamp.${fmt}`),mime,0.93);
+  oc.toBlob(blob=>triggerDownload(URL.createObjectURL(blob),`${name}.${fmt}`),mime,0.93);
 }
 function triggerDownload(url,filename){
   const a=document.createElement('a');a.href=url;a.download=filename;
@@ -1003,9 +1065,6 @@ function triggerDownload(url,filename){
   setTimeout(()=>URL.revokeObjectURL(url),2000);
   setDirty(false);
 }
-document.getElementById('exp-png').onclick=()=>exportAs('png');
-document.getElementById('exp-jpg').onclick=()=>exportAs('jpg');
-document.getElementById('exp-svg').onclick=()=>exportAs('svg');
 
 // ══════════════════════════════════════════════════════
 //  PWA INSTALL
@@ -1031,26 +1090,6 @@ document.getElementById('install-btn').onclick=async()=>{
 window.addEventListener('appinstalled',()=>{
   document.getElementById('install-btn').style.display='none';
 });
-
-// ══════════════════════════════════════════════════════
-//  DOG DEMO
-// ══════════════════════════════════════════════════════
-function dogShapes(){
-  const B='#1a1a1a',R='#e8302a';let id=1;const out=[];
-  const sq=(gx,gy,size,color)=>out.push({id:id++,type:'square',gx,gy,size,angle:0,color});
-  const qc=(gx,gy,size,angle,color)=>out.push({id:id++,type:'quarter',gx,gy,size,angle,color});
-  sq(6,2,2,B);sq(6,4,2,B);sq(6,6,2,B);qc(8,2,2,90,B);
-  sq(22,2,2,B);sq(22,4,2,B);sq(22,6,2,B);qc(20,2,2,0,B);
-  qc(10,2,2,0,B);qc(18,2,2,90,B);
-  qc(13,5,2,180,B);qc(15,5,2,270,B);qc(13,7,2,90,B);qc(15,7,2,0,B);
-  sq(13,13,2,R);sq(15,13,2,R);
-  sq(13,15,2,R);sq(15,15,2,R);
-  qc(13,15,2,90,R);qc(15,15,2,0,R);
-  return out;
-}
-document.getElementById('load-dog-btn').onclick=()=>{
-  pushHistory();S.shapes=dogShapes();S.nextId=200;rebuildOccupied();setDirty(false);redraw();
-};
 
 // ══════════════════════════════════════════════════════
 //  SERVICE WORKER
