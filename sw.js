@@ -1,4 +1,4 @@
-const CACHE = 'shapestamp-v4';
+const CACHE = 'shapestamp-v5';
 const ASSETS = ['./shapestamp.html', './manifest.json'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
